@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Sales Forecast{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filters Row -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-funnel"></i> Filters</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label">Region</label>
+                            <select class="form-select" id="regionFilter">
+                                <option value="All">All Regions</option>
+                                {% for region in ['East', 'West', 'Central', 'South'] %}
+                                <option value="{{ region }}">{{ region }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="All">All Categories</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Technology">Technology</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Year</label>
+                            <select class="form-select" id="yearFilter">
+                                <option value="All">All Years</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" onclick="applyFilters()">
+                                <i class="bi bi-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-currency-dollar"></i> Total Sales</h6>
+                    <h3 class="card-text">${{ "%.2f"|format(insights.total_sales) }}</h3>
+                    <small>Lifetime Revenue</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-graph-up-arrow"></i> Total Profit</h6>
+                    <h3 class="card-text">${{ "%.2f"|format(insights.total_profit) }}</h3>
+                    <small>Net Profit</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-cart-check"></i> Total Orders</h6>
+                    <h3 class="card-text">{{ insights.total_orders }}</h3>
+                    <small>Completed Orders</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-percent"></i> Profit Margin</h6>
+                    <h3 class="card-text">{{ insights.profit_margin }}%</h3>
+                    <small>Average Margin</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Sales Trend & Forecast</h5>
+                </div>
+                <div class="card-body">
+                    <div id="forecastChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-pie-chart"></i> Sales by Category</h5>
+                </div>
+                <div class="card-body">
+                    <div id="categoryChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bar-chart"></i> Regional Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div id="regionChart" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-trophy"></i> Top 10 Products</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">Sales</th>
+                                    <th class="text-end">Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products[:10] %}
+                                <tr>
+                                    <td>{{ product['Product Name'][:30] }}...</td>
+                                    <td class="text-end">${{ "%.2f"|format(product.Sales) }}</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-{{ 'success' if product.Sales > 10000 else 'warning' }}">
+                                            ${{ "%.2f"|format(product.Sales * 0.15) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6><i class="bi bi-lightbulb"></i> Key Insights</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <strong>Top Category:</strong> {{ insights.top_category }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                            <strong>Peak Month:</strong> {{ insights.peak_month }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-arrow-down-circle-fill text-danger"></i>
+                            <strong>Low Season:</strong> {{ insights.low_month }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-graph-up-arrow text-info"></i>
+                            <strong>Forecast Growth:</strong> {{ insights.forecast_growth }}%
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6><i class="bi bi-bullseye"></i> Recommendations</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <small><i class="bi bi-info-circle"></i> 
+                        Increase inventory for {{ insights.top_category }} in {{ insights.peak_month }}</small>
+                    </div>
+                    <div class="alert alert-warning">
+                        <small><i class="bi bi-exclamation-triangle"></i>
+                        Plan promotions for {{ insights.low_month }} to boost sales</small>
+                    </div>
+                    <div class="alert alert-success">
+                        <small><i class="bi bi-check-circle"></i>
+                        Focus on {{ insights.most_profitable_category }} for higher margins</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6><i class="bi bi-speedometer2"></i> Model Performance</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <h1 class="display-4 text-primary">{{ insights.model_accuracy }}%</h1>
+                        <p class="text-muted">Forecast Accuracy</p>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: {{ insights.model_accuracy }}%"></div>
+                    </div>
+                    <small class="text-muted mt-2">ARIMA Model Performance</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize charts with data from Flask
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sales Forecast Chart
+        var forecastTrace = {
+            x: {{ monthly_sales|map(attribute='Month')|list|tojson }},
+            y: {{ monthly_sales|map(attribute='Sales')|list|tojson }},
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Actual Sales',
+            line: {color: '#1f77b4'}
+        };
+
+        var forecastTrace2 = {
+            x: {{ forecast_df|map(attribute='Month')|list|tojson }},
+            y: {{ forecast_df|map(attribute='Forecast')|list|tojson }},
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Forecast',
+            line: {color: '#ff7f0e', dash: 'dash'}
+        };
+
+        var forecastLayout = {
+            title: 'Sales Trend & 12-Month Forecast',
+            xaxis: {title: 'Month'},
+            yaxis: {title: 'Sales ($)'},
+            hovermode: 'closest'
+        };
+
+        Plotly.newPlot('forecastChart', [forecastTrace, forecastTrace2], forecastLayout);
+
+        // Category Pie Chart
+        var categoryData = [{
+            values: {{ category_sales|map(attribute='Sales')|list|tojson }},
+            labels: {{ category_sales|map(attribute='Category')|list|tojson }},
+            type: 'pie',
+            hole: 0.4,
+            marker: {colors: ['#1f77b4', '#ff7f0e', '#2ca02c']}
+        }];
+
+        var categoryLayout = {
+            title: 'Sales Distribution by Category',
+            showlegend: true
+        };
+
+        Plotly.newPlot('categoryChart', categoryData, categoryLayout);
+
+        // Regional Bar Chart
+        var regionData = [{
+            x: {{ regional_sales|map(attribute='Region')|list|tojson }},
+            y: {{ regional_sales|map(attribute='Sales')|list|tojson }},
+            type: 'bar',
+            marker: {color: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']}
+        }];
+
+        var regionLayout = {
+            title: 'Sales by Region',
+            xaxis: {title: 'Region'},
+            yaxis: {title: 'Sales ($)'}
+        };
+
+        Plotly.newPlot('regionChart', regionData, regionLayout);
+    });
+
+    function applyFilters() {
+        const region = document.getElementById('regionFilter').value;
+        const category = document.getElementById('categoryFilter').value;
+        const year = document.getElementById('yearFilter').value;
+        
+        fetch('/api/filter', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({region, category, year})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            // Update charts with filtered data
+            updateCharts(data);
+            updateInsights(data.insights);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error applying filters');
+        });
+    }
+
+    function updateCharts(data) {
+        // Update forecast chart
+        var updatedForecast = [{
+            x: data.monthly_sales.map(d => d.Month),
+            y: data.monthly_sales.map(d => d.Sales),
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Actual Sales',
+            line: {color: '#1f77b4'}
+        }, {
+            x: data.forecast_df.map(d => d.Month),
+            y: data.forecast_df.map(d => d.Forecast),
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Forecast',
+            line: {color: '#ff7f0e', dash: 'dash'}
+        }];
+
+        Plotly.react('forecastChart', updatedForecast, {
+            title: 'Sales Trend & 12-Month Forecast (Filtered)',
+            xaxis: {title: 'Month'},
+            yaxis: {title: 'Sales ($)'}
+        });
+    }
+
+    function updateInsights(insights) {
+        // Update insight cards
+        document.querySelector('.card.text-white.bg-success h3').textContent = 
+            '$' + insights.total_sales.toFixed(2);
+        document.querySelector('.card.text-white.bg-info h3').textContent = 
+            '$' + insights.total_profit.toFixed(2);
+        // Update other insights as needed
+    }
+</script>
+{% endblock %}

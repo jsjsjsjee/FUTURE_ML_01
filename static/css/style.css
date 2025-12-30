@@ -1,0 +1,68 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1rem;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.insight-card {
+    border-left: 4px solid #0d6efd;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.footer {
+    border-top: 1px solid #dee2e6;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.alert {
+    border: none;
+    border-left: 4px solid;
+}
+
+.display-4 {
+    font-weight: 300;
+}
+
+.form-select, .form-control {
+    border: 1px solid #ced4da;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
